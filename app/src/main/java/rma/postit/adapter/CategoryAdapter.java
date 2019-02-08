@@ -1,42 +1,86 @@
 package rma.postit.adapter;
 
+import android.content.Intent;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
-import com.google.firebase.firestore.QuerySnapshot;
-
-import java.util.ArrayList;
 import java.util.List;
 
+import rma.postit.AddPostActivity;
 import rma.postit.MainActivity;
 import rma.postit.R;
+import rma.postit.helper.FirebaseConnector;
 import rma.postit.model.Category;
+import rma.postit.model.Post;
 
 public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.CategoryViewHolder>{
     MainActivity mMainActivity;
     List<Category> mCategories;
+    CategoryViewHolder mHolder;
 
     static class CategoryViewHolder extends RecyclerView.ViewHolder {
-        View view;
-        TextView title;
-        TextView description;
+        TextView mTitle;
+        RecyclerView mRecyclerView;
+        Category mCategory;
+        PostAdapter mAdapter;
+        MainActivity mMain;
+        Button mButton;
 
-        public CategoryViewHolder(@NonNull View itemView) {
+        public CategoryViewHolder(@NonNull View itemView, @NonNull Category category, @NonNull MainActivity mainActivity) {
             super(itemView);
+            mCategory = category;
+            mMain = mainActivity;
 
             getViewFromComponents(itemView);
+            setOnClickListener();
+            getPosts();
+        }
+
+        private void setOnClickListener() {
+            mButton.setOnClickListener((event) -> {
+                // start intent
+                Intent intent = new Intent(mMain, AddPostActivity.class);
+                Bundle bundle = new Bundle();
+
+                bundle.putString("id", mCategory.getId());
+                intent.putExtras(bundle);
+
+                mMain.startActivity(intent);
+            });
+        }
+
+        private void getPosts() {
+            FirebaseConnector.getInstance().getCategoryPosts(mCategory.getId()).addSnapshotListener((posts, e) -> {
+                if( mAdapter == null ) {
+                    mAdapter = new PostAdapter();
+                    LinearLayoutManager horizontalLayoutManager = new LinearLayoutManager(mMain, LinearLayoutManager.HORIZONTAL, false);
+                    mRecyclerView.setLayoutManager(horizontalLayoutManager);
+                    mRecyclerView.setAdapter(mAdapter);
+                    mAdapter.setContext(mMain);
+                    mAdapter.setCategoryId(mCategory.getId());
+
+                }
+
+                if( posts != null ) {
+                    mAdapter.clear();
+                    mAdapter.addAll(posts.toObjects(Post.class));
+                }
+            });
         }
 
         private void getViewFromComponents(View itemView) {
-            view = itemView;
-            title = itemView.findViewById(R.id.category_name);
-            description = itemView.findViewById(R.id.category_description);
+            mTitle = itemView.findViewById(R.id.category_title);
+            mRecyclerView = itemView.findViewById(R.id.post_holder);
+            mButton = itemView.findViewById(R.id.add_button);
         }
 
     }
@@ -53,24 +97,13 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
         ConstraintLayout v = (ConstraintLayout) LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.adapter_category, parent, false);
         Category category = mCategories.get(i);
-        Log.d("POST-IT", i+"");
-        Log.d("POST-IT", category.getName());
-
-        CategoryViewHolder holder = new CategoryViewHolder(v);
-        fillViewWithCategory(holder, category);
-        setOnClickListener(holder);
-        return holder;
+        mHolder = new CategoryViewHolder(v, category, mMainActivity);
+        fillViewWithCategory(mHolder, category);
+        return mHolder;
     }
 
     private void fillViewWithCategory(CategoryViewHolder holder, Category category) {
-        holder.title.setText(category.getName());
-        holder.description.setText(category.getDescription());
-    }
-
-    private void setOnClickListener(CategoryViewHolder holder) {
-        holder.view.setOnClickListener((e) -> {
-
-        });
+        holder.mTitle.setText(category.getName());
     }
 
     @Override
