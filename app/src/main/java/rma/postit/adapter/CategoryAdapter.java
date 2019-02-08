@@ -85,4 +85,13 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
     public int getItemViewType(int i){
         return i;
     }
+
+    public void clear() {
+        mCategories = null;
+        notifyDataSetChanged();
+    }
+    public void addAll(List<Category> list) {
+        mCategories = list;
+        notifyDataSetChanged();
+    }
 }

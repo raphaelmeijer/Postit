@@ -1,36 +1,66 @@
 package rma.postit;
 
 import android.app.ProgressDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.util.Log;
+import android.support.design.widget.TabLayout;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.AppCompatActivity;
+import android.widget.RelativeLayout;
 
-import rma.postit.adapter.CategoryAdapter;
+import java.util.ArrayList;
+import java.util.List;
+
+import rma.postit.fragment.PostsFragment;
 import rma.postit.helper.FirebaseConnector;
 import rma.postit.model.Category;
 
 public class MainActivity extends AppCompatActivity {
-    RecyclerView mRecyclerView;
-
+    TabLayout mCategoryTabs;
+    PostsFragment mPostsFragment;
+    RelativeLayout mHolder;
+    List<Category> mCategories;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         getComponentsFromView();
-        setUpRecyclerView();
+        setUpFragment();
         setCategoriesToView();
+        setOnClickListener();
     }
 
-    private void setUpRecyclerView() {
-        // - content doesn't change so use this for permormacne
-        mRecyclerView.setHasFixedSize(true);
-        // - set layout manager
-        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
-        mRecyclerView.setLayoutManager(layoutManager);
+    private void setUpFragment() {
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.addToBackStack(mPostsFragment.getTag());
+        fragmentTransaction.replace(R.id.main_holder, mPostsFragment);
+        fragmentTransaction.commit();
     }
+
+    private void setOnClickListener() {
+        mCategoryTabs.addOnTabSelectedListener(new TabLayout.BaseOnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                loadFragment(tab);
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+
+            }
+        });
+    }
+
+    private void loadFragment(TabLayout.Tab tab) {
+        mPostsFragment.clearAdapter();
+        mPostsFragment.addCategory(mCategories.get(tab.getPosition()).getId());
+    }
+
 
     private void setCategoriesToView() {
         ProgressDialog pd = new ProgressDialog(this );
@@ -38,16 +68,32 @@ public class MainActivity extends AppCompatActivity {
         FirebaseConnector
             .getInstance()
             .getUserCategories()
-            .get()
-            .addOnSuccessListener(categoryCollection -> {
-                CategoryAdapter categoryAdapter = new CategoryAdapter(categoryCollection.toObjects(Category.class), this);
+            .addSnapshotListener((categoryCollection,e) -> {
+                int i = 0;
 
-                mRecyclerView.setAdapter(categoryAdapter);
+                mCategories = categoryCollection.toObjects(Category.class);
+
+                for( Category category :  mCategories ){
+                    TabLayout.Tab tab = mCategoryTabs.newTab();
+
+                    // save the id as tag
+                    mCategoryTabs.addTab(tab.setText(category.getName()));
+
+                    if( i == 0 ){
+                        // set current tab selected
+                        tab.select();
+                    }
+
+                    i++;
+                }
+
                 pd.dismiss();
             });
     }
 
     private void getComponentsFromView() {
-        mRecyclerView = findViewById(R.id.category_listing);
+        mCategoryTabs = findViewById(R.id.category_tabs);
+        mPostsFragment = new PostsFragment();
+        mHolder = findViewById(R.id.main_holder);
     }
 }

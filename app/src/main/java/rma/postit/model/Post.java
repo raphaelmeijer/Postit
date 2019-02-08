@@ -6,6 +6,8 @@ public class Post {
     private String id = UUID.randomUUID().toString();
     private String title = "";
     private String description = "";
+    private String uri = "";
+    private String imageUrl = "";
 
     public Post(){}
 
@@ -31,5 +33,21 @@ public class Post {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getUri() {
+        return uri;
+    }
+
+    public void setUri(String uri) {
+        this.uri = uri;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 }

@@ -8,9 +8,9 @@ public class Globals {
         "Cars",
         "Technology",
         "Education",
+        "Funny",
         "News",
         "Other"
-
     };
     public static ProgressDialog getLoadingDialog(Context context){
         ProgressDialog pd = new ProgressDialog(context);
@@ -18,5 +18,11 @@ public class Globals {
         pd.setMessage("Loading.... Please wait.");
 
         return pd;
+    }
+
+    public static String parseUriString(String uri) {
+        uri = !uri.startsWith("http") && !uri.startsWith("https") ? "http://" + uri : uri;
+
+        return uri;
     }
 }

@@ -7,8 +7,10 @@ import com.google.firebase.auth.UserInfo;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 
 import rma.postit.model.Category;
+import rma.postit.model.Post;
 
 public class FirebaseConnector {
     private static FirebaseConnector unique = new FirebaseConnector();
@@ -30,6 +32,11 @@ public class FirebaseConnector {
         return getFireauth().getUid();
     }
 
+    public CollectionReference getCategoryPosts(String categoryId){
+        return getUserCategory(categoryId)
+                .collection("posts");
+    }
+
     public CollectionReference getUserCategories(){
         return getFirestore()
                 .collection("users")
@@ -46,7 +53,11 @@ public class FirebaseConnector {
                 .collection("posts")
                 .document(postId);
     }
-
+    public DocumentReference createUserPostByCategory(String categoryId, String postId){
+        return getUserCategory(categoryId)
+                .collection("posts")
+                .document(postId);
+    }
     public boolean isUserLoggedIn(){
         return getFireauth().getCurrentUser() != null;
     }
@@ -71,7 +82,7 @@ public class FirebaseConnector {
         for( String name : Globals.CATEGORIES ){
             Category category = new Category();
             category.setName(name);
-            getUserCategories().add(category);
+            getUserCategories().document(category.getId()).set(category, SetOptions.merge());
         }
     }
 }
